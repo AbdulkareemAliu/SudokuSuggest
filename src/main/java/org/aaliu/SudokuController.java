@@ -31,7 +31,11 @@ public class SudokuController {
 
             result = convertedBoard.suggest();
         } catch (IllegalArgumentException e) {
-            result = "The board looks a little off, please make sure it is valid or I won't be able to make a great suggestion!";
+            if (e.getMessage().startsWith("Oops!")){
+                result = e.getMessage();
+            } else {
+                throw e;
+            }
         }
 
         HashMap<String, String> response = new HashMap<String, String>();

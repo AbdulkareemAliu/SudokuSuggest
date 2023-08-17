@@ -14,6 +14,7 @@ public class SudokuBoard {
     private HashMap<String, HashMap<Integer, ArrayList<String>>> regToCandPosition = new HashMap<>();
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> rowToCandPosition = new HashMap<>();
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> colToCandPosition = new HashMap<>();
+    private HashMap<String, ArrayList<String>> eliminationSummary = new HashMap<String, ArrayList<String>>();
 
 
     public SudokuBoard(ArrayList<ArrayList<String>> board){
@@ -121,8 +122,12 @@ public class SudokuBoard {
         HashSet<String> colSet = colMap.getOrDefault(colNum, new HashSet<String>());
         HashSet<String> regSet = regMap.getOrDefault(region, new HashSet<String>());
 
-        if (rowSet.contains(value) || colSet.contains(value) || regSet.contains(value)) {
-            throw new IllegalArgumentException();
+        if (rowSet.contains(value)){
+            throw new IllegalArgumentException("Oops! There seems to be an extra " + value + " in row " + rowNum + 1);
+        } else if (colSet.contains(value)){
+            throw new IllegalArgumentException("Oops! There seems to be an extra " + value + " in column " + colNum + 1);
+        } else if (regSet.contains(value)){
+            throw new IllegalArgumentException("Oops! There seems to be an extra " + value + " in region " + region);
         }
 
         rowSet.add(value);
@@ -210,7 +215,7 @@ public class SudokuBoard {
             int rowNum = pair.charAt(0) - '0';
             int colNum = pair.charAt(1) - '0';
             if (candidateSet.size() == 1) {
-                return "Item at row " + (rowNum + 0) + " and column " + (colNum + 0) + " is a Naked Single and has value " + candidateSet.iterator().next();
+                return (rowNum + 1) + "" + (colNum + 1) + "" + candidateSet.iterator().next();
             }
         }
         return "";
@@ -227,7 +232,7 @@ public class SudokuBoard {
                 if(!position.equals("")){
                     int rowNum = position.charAt(0) - '0';
                     int colNum = position.charAt(1) - '0';
-                    return "Item at row " + (rowNum + 0) + " and column " + (colNum + 0) + " is a Hidden Single and has value " + candidate;
+                    return (rowNum + 1) + "" + (colNum + 1) + "" + candidate;
                 }
             }
         }
@@ -326,15 +331,44 @@ public class SudokuBoard {
                     
                     // Finally updates the candidates based on whether the found pair is along a row or column
                     if (isRowPair || isColPair) {
+                        StringBuilder description = new StringBuilder();
+                        description.append("Positions: ");
                         didEliminate = true;
-                        int rowNum, colNum;
+                        int rowNum = rowChar - '0'; int colNum = colChar - '0';
+
+                        //ignoring cases in which the candidate for elimination is already in the regions on the same row
+                        String nextReg, prevReg;
+                        int regX = rowNum / 3;
+                        int regY= colNum / 3;
+                        if (isRowPair){
+                            nextReg = regX + "" + ((regY + 1) % 3);
+                            prevReg = regX + "" + (((regY - 1 % 3) + 3) % 3); //getting positive mod
+                        } else {
+                            nextReg = ((regX + 1) % 3) + "" + regY;
+                            prevReg = (((regX - 1 % 3) + 3) % 3) + "" + regY; //getting positive mod
+                        }
+                        
+                        if (regMap.get(nextReg).contains(curCandidate.toString()) && regMap.get(prevReg).contains(curCandidate.toString())) {
+                            continue;
+                        }
+
                         for (String pair : curIndices) {
                             rowNum = pair.charAt(0) - '0';
                             colNum = pair.charAt(1) - '0';
+                            description.append("(" + (rowNum + 1) + ", " + (colNum + 1) +") ");
+
                             List<String> toUpdate = isRowPair ? Arrays.asList("row") : Arrays.asList("col");
                             updateCandidates(curCandidate.toString(), rowNum, colNum, toUpdate, new HashSet<>(curIndices));
 
                         }
+                        String relevantAxis = (isRowPair ? ("row " + (rowNum + 1)) : ("column " + (colNum + 1)));
+                        description.append("are the only positions that can be " + curCandidate.toString() + " in their region. This means that no other element in ");
+                        description.append(relevantAxis);
+                        description.append(" can be a " + curCandidate);
+                        
+                        ArrayList<String> summaryList = eliminationSummary.getOrDefault(relevantAxis, new ArrayList<String>());
+                        summaryList.add(description.toString());
+                        eliminationSummary.put(relevantAxis, summaryList);
                         
                     }
                 }
@@ -383,21 +417,50 @@ public class SudokuBoard {
                         HashSet<String> toIgnore = new HashSet<>();
                         didEliminate = true;
 
+                        StringBuilder description = new StringBuilder();
+                        String relevantAxis1 = Integer.toString(indsAlongAxis.get(0) + 1);
+                        String relevantAxis2 = Integer.toString(indsAlongAxis.get(1) + 1);
+
                         if (direction.equals("row")){
                             toIgnore.add(i + "" + indsAlongAxis.get(0)); toIgnore.add(i + "" + indsAlongAxis.get(1));
                             toIgnore.add(j + "" + indsAlongAxis.get(0)); toIgnore.add(j + "" + indsAlongAxis.get(1));
 
+                            description.append(String.format(
+                                "Positions (%s, %s), (%s, %s), (%s, %s), and (%s, %s) form an X-Wing box", 
+                                (i + 1), relevantAxis1, (i + 1), relevantAxis2,
+                                (j + 1), relevantAxis1, (j + 1), relevantAxis2
+                            ));
+
                             updateCandidates(cand.toString(), i, indsAlongAxis.get(0), Arrays.asList(direction), toIgnore);
                             updateCandidates(cand.toString(), i, indsAlongAxis.get(1), Arrays.asList(direction), toIgnore);
 
-                        } else if (direction.equals("col")) {
+                        } else {
                             toIgnore.add(indsAlongAxis.get(0) + "" + i); toIgnore.add(indsAlongAxis.get(1) + "" + i);
                             toIgnore.add(indsAlongAxis.get(0) + "" + j); toIgnore.add(indsAlongAxis.get(1) + "" + j);
+
+                            description.append(String.format(
+                                "Positions (%s, %s), (%s, %s), (%s, %s), and (%s, %s) form an X-Wing box", 
+                                (indsAlongAxis.get(0) + 1), (i + 1), (indsAlongAxis.get(1) + 1), (i + 1), 
+                                (indsAlongAxis.get(0) + 1), (j + 1), (indsAlongAxis.get(1) + 1), (j + 1)
+                            ));
 
                             updateCandidates(cand.toString(), indsAlongAxis.get(0), i, Arrays.asList(direction), toIgnore);
                             updateCandidates(cand.toString(), indsAlongAxis.get(1), i, Arrays.asList(direction), toIgnore);
 
                         }
+
+                        description.append("; therefore, they are the only positions along ");
+                        description.append((direction.equals("row") ? "col" : "row"));
+                        description.append("s " + indsAlongAxis.get(0) + " and " + indsAlongAxis.get(1));
+
+                        ArrayList<String> summaryList1 = eliminationSummary.getOrDefault(direction + " " + relevantAxis1, new ArrayList<String>());
+                        ArrayList<String> summaryList2 = eliminationSummary.getOrDefault(direction + " " + relevantAxis2, new ArrayList<String>());
+
+                        summaryList1.add(description.toString());
+                        summaryList2.add(description.toString());
+
+                        eliminationSummary.put(direction + " " + relevantAxis1, summaryList1);
+                        eliminationSummary.put(direction + " " + relevantAxis2, summaryList2);
                     }
 
                 }
@@ -410,19 +473,43 @@ public class SudokuBoard {
 
     }
 
+    private String getDescription(String result, String reason){
+        char rowNum = result.charAt(0);
+        char colNum = result.charAt(1);
+        char value = result.charAt(2);
+
+        HashSet<String> allDescriptions = new HashSet<>();
+
+        allDescriptions.add(String.join(". ", eliminationSummary.getOrDefault("row " + rowNum, new ArrayList<String>())));
+        allDescriptions.add(String.join(". ", eliminationSummary.getOrDefault("col " + colNum, new ArrayList<String>())));
+
+        String candidateReductionSummary = String.join(". ", allDescriptions);
+
+        while (candidateReductionSummary.startsWith(". ")){
+            candidateReductionSummary = candidateReductionSummary.substring(2);
+        }
+
+        if (candidateReductionSummary.equals("")) {
+            return value + String.format(" should go in row %s and column %s since %s.", rowNum, colNum, reason);
+        } else {
+            return candidateReductionSummary + String.format("\n \n Because of this we suggest you put a %s in row %s and column %s since %s.", value, rowNum, colNum, reason);
+        }
+    }
+
     public String suggest(){
         if (posToCandidates.size() == 0) {
             return "Looks like you won, congrats!";
         }
+        
         while (PointingPairs() || XWing("row") || XWing("col")) {
             String nakedSingleRes = NakedSingle();
             if (!nakedSingleRes.equals("")){
-                return nakedSingleRes;
+                return getDescription(nakedSingleRes, "it is the only number that can go there");
             }
 
             String hiddenSingleRes = HiddenSingle();
             if (!hiddenSingleRes.equals("")){
-                return hiddenSingleRes;
+                return getDescription(hiddenSingleRes, "it is the only position in its row/col/region that can be that number");
             }
         }
         
