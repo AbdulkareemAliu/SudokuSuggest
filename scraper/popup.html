@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css"> 
+    <title>Sudoku Suggest</title>
+</head>
+<body>
+    <div class="main-group">
+    <header>
+        <h1>Sudoku Suggest</h1>
+        <p>Enter the state of the board and I will make a suggestion based on some strategies and techniques I know!</p>
+    </header>
+    
+    <main>
+        <div class="sudoku">
+            <table>
+                <tbody id="sudoku-grid">
+
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <textarea id="apiResponseTextbox" class="api-response-textbox" readonly></textarea>
+
+    <button id="suggest-button">Make Suggestion</button>
+
+    </div>
+
+    <footer>
+        <script src="generate-grid.js"></script>
+    </footer>
+</body>
+</html>

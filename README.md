@@ -1,2 +1,2 @@
-# SudokuHelper
+# SudokuSuggest
 :)

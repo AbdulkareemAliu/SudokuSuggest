@@ -11,12 +11,12 @@ public class SudokuBoard {
     private HashMap<Integer, HashSet<String>> rowMap, colMap;
     private HashMap<String, HashSet<String>> regMap;
     private HashMap<String, HashSet<Integer>> posToCandidates;
-    private HashMap<String, HashMap<Integer, ArrayList<String>>> regToCandPosition;
+    private HashMap<String, HashMap<Integer, ArrayList<String>>> regToCandPosition = new HashMap<>();
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> rowToCandPosition = new HashMap<>();
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> colToCandPosition = new HashMap<>();
 
 
-    public SudokuBoard(String[][] board){
+    public SudokuBoard(ArrayList<ArrayList<String>> board){
 
         rowMap = new HashMap<>();
         colMap = new HashMap<>();
@@ -27,17 +27,17 @@ public class SudokuBoard {
         for (int i = 0; i < 9; i ++) {
             for (int j = 0; j < 9; j ++) {
 
-                if (board[i][j].equals(".")) {
+                if (board.get(i).get(j).equals(".")) {
                     posToCandidates.put(i + "" + j, new HashSet<Integer>());
                     continue;
                 }
 
-                String val = board[i][j];
+                String val = board.get(i).get(j);
 
                 int row = i;
                 int col = j;
 
-                updateBoard(val, row, col);
+                updateBoard(val, row, col, true);
 
             }
         }
@@ -51,9 +51,9 @@ public class SudokuBoard {
             int colNum = pair.charAt(1) - '0';
             String region = (rowNum / 3) + "" + (colNum / 3);
 
-            HashSet<String> rowSet = rowMap.get(rowNum);
-            HashSet<String> colSet = colMap.get(colNum);
-            HashSet<String> regSet = regMap.get(region);
+            HashSet<String> rowSet = rowMap.getOrDefault(rowNum, new HashSet<String>());
+            HashSet<String> colSet = colMap.getOrDefault(colNum, new HashSet<String>());
+            HashSet<String> regSet = regMap.getOrDefault(region, new HashSet<String>());
             HashSet<String> totalSet = new HashSet<>();
 
             totalSet.addAll(rowSet);
@@ -114,12 +114,16 @@ public class SudokuBoard {
     }
 
     // public interface for updating internal structures
-    public void updateBoard(String value, int rowNum, int colNum){
+    public void updateBoard(String value, int rowNum, int colNum, boolean initalizing){
         String region = (rowNum / 3) + "" + (colNum / 3);
 
         HashSet<String> rowSet = rowMap.getOrDefault(rowNum, new HashSet<String>());
         HashSet<String> colSet = colMap.getOrDefault(colNum, new HashSet<String>());
         HashSet<String> regSet = regMap.getOrDefault(region, new HashSet<String>());
+
+        if (rowSet.contains(value) || colSet.contains(value) || regSet.contains(value)) {
+            throw new IllegalArgumentException();
+        }
 
         rowSet.add(value);
         colSet.add(value);
@@ -133,7 +137,10 @@ public class SudokuBoard {
             posToCandidates.remove(rowNum + "" + colNum);
         }
         
-        updateCandidates(value, rowNum, colNum, Arrays.asList("row", "col", "reg"), new HashSet<String>());
+        if (!initalizing){
+            updateCandidates(value, rowNum, colNum, Arrays.asList("row", "col", "reg"), new HashSet<String>());
+        }
+        
     }
 
     // Updates the candidate structures by removing a given value from the dimensions specified in the toUpdate list 
