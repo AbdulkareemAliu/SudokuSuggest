@@ -86,37 +86,7 @@ public class ReadImage {
 
             // BufferedImage singleGrid = croppedImage.getSubimage(0, 0, widthIncrement, heightIncrement);
 
-            // ImageIO.write(singleGrid, "png", new File("src/main/java/org/aaliu/single_grid.png"));
-//JAVA_LIBRARY_PATH= ~/.m2/repository/net/java/dev/jna
-            try{
-                // System.out.println(tesseract.doOCR(croppedImage, new Rectangle(0, 0, widthIncrement, heightIncrement)));
-                // File tmpFolder = LoadLibs.extractTessResources("macosx-aarch64");
-        
-                // Set the java.library.path property to the path of the extracted folder
-                // System.setProperty("java.library.path", tmpFolder.getPath());
-                
-                // Explicitly load the Tesseract native library
-                // System.loadLibrary("libtesseract");
-
-                String libraryPath = "/opt/homebrew/bin/tesseract";
-                NativeLibrary.addSearchPath("tesseract", libraryPath);
-
-                NativeLibrary.addSearchPath("libleptonica.6", "/opt/homebrew/Cellar/leptonica/1.83.1/lib");
-                // System.load("/opt/homebrew/Cellar/leptonica/1.83.1/lib/libleptonica.6.dylib");
-                ITesseract tesseract = new Tesseract();
-                tesseract.setDatapath("src/main/java/org/aaliu");
-                tesseract.setLanguage("eng");
-
-                System.out.println(tesseract.doOCR(new File("src/main/java/org/aaliu/single_grid.png")));
-            } catch (TesseractException e) {
-                e.printStackTrace();
-            }
-
-            // BufferedImage image = new BufferedImage(sudokuImage.getWidth(), sudokuImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);  
-            // Graphics g = image.getGraphics();
-            // g.drawImage(sudokuImage, 0, 0, null);  
-            // g.dispose();  
-            // 
+            // Specifics of OCR implementation are yet to be implemented
 
         } catch (IOException e) {
             e.printStackTrace();
