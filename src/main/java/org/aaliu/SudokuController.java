@@ -19,7 +19,6 @@ public class SudokuController {
         
         String result;
         System.out.println("request made");
-
         
         try {
             ArrayList<ArrayList<String>> myBoard = request.getInputBoard();

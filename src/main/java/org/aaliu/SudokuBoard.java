@@ -347,7 +347,7 @@ public class SudokuBoard {
                             nextReg = ((regX + 1) % 3) + "" + regY;
                             prevReg = (((regX - 1 % 3) + 3) % 3) + "" + regY; //getting positive mod
                         }
-                        
+
                         if (regMap.get(nextReg).contains(curCandidate.toString()) && regMap.get(prevReg).contains(curCandidate.toString())) {
                             continue;
                         }
@@ -512,7 +512,7 @@ public class SudokuBoard {
                 return getDescription(hiddenSingleRes, "it is the only position in its row/col/region that can be that number");
             }
         }
-        
+
         return "No strategies have worked";
     }
 
